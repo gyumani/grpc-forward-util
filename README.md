@@ -11,17 +11,21 @@ An interactive TUI (Text User Interface) tool for managing Kubernetes port forwa
 - 🔄 **Auto-reconnect** - Automatically reconnects when port-forward connections drop
 - 📝 **Service Management** - Add, edit, and delete services with ease
 - 🎯 **Multi-selection** - Start multiple port-forwards simultaneously
-- 📊 **Status Monitoring** - Real-time status of running port-forwards
+- 📊 **Status Monitoring** - Real-time status of running port-forwards with Kubernetes context display
 - 📋 **Log Viewing** - View logs for each service
 - ⚡ **CLI & UI Modes** - Works with or without gum installed
 - 🌐 **Multi-language Support** - English and Korean (한국어) UI
+- 🔧 **Easy Upgrade** - Built-in upgrade command to get latest version
+- 📖 **Help Command** - Comprehensive help with `-h` or `--help`
 
 ## Demo
 
 ```
 ╔══════════════════════════════════════════╗
-║   K8s Port Forward Manager              ║
+║   K8s Port Forward Manager v1.3.1       ║
 ╚══════════════════════════════════════════╝
+
+Current Context: your-k8s-cluster
 
 ● Running: 3 services
 
@@ -77,6 +81,10 @@ port-machine
 ### Command Line Mode
 
 ```bash
+# Show help
+port-machine -h
+port-machine --help
+
 # Start all services
 port-machine start
 
@@ -88,6 +96,9 @@ port-machine stop
 
 # Check status
 port-machine status
+
+# Upgrade to latest version
+port-machine upgrade
 ```
 
 ## Language Settings
@@ -111,7 +122,13 @@ The language preference is stored in `~/.port-machine-lang` and will be remember
 
 ## Upgrade
 
-To upgrade to the latest version:
+To upgrade to the latest version, simply run:
+
+```bash
+port-machine upgrade
+```
+
+Or alternatively:
 
 ```bash
 cd grpc-forward-util
@@ -244,6 +261,19 @@ echo "en" > ~/.port-machine-lang
 echo "ko" > ~/.port-machine-lang
 ```
 
+### Getting Help
+
+For a quick reference of all commands:
+```bash
+port-machine -h
+```
+
+This will display:
+- Available commands
+- Command descriptions
+- Usage examples
+- Current version
+
 ## Disclaimer
 
 ⚠️ **This tool is for development purposes only.**
@@ -272,8 +302,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Created with ❤️ for easier Kubernetes development workflow
 
 ## Changelog
+
+### v1.3.1 (2025-11-29)
+**Minor Release - Version Display & Context Monitoring**
+
+#### ✨ New Features
+- 📌 **Version Display**: Version number shown in UI header (e.g., "K8s Port Forward Manager v1.3.1")
+- 🎯 **Kubernetes Context Display**: Current kubectl context shown on main screen
+- 📖 **Help Command**: Added `-h`, `--help`, and `help` commands for usage information
+
+#### 🔧 Changes
+- Version information integrated into header title
+- Real-time Kubernetes context monitoring
+- Improved help documentation with examples
+
+---
+
 ### v1.2.1 (2025-11-29)
-**Minor Release - addtion upgrade command**
+**Minor Release - Upgrade Command**
+
+#### ✨ New Features
+- 🔧 **Upgrade Command**: Added `port-machine upgrade` for easy version updates
+- Integrated upgrade functionality into main command
 
 ### v1.1.1 (2025-11-29)
 **Minor Release - Multi-language Support & UI Improvements**

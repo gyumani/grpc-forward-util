@@ -103,6 +103,31 @@ msg() {
       no_logs) echo "No log files found." ;;
       choice) echo "Choice (1-5):" ;;
       none) echo "None" ;;
+
+      # Kubernetes context
+      current_context) echo "Current Context:" ;;
+      context_not_set) echo "Context not set" ;;
+
+      # Version
+      version_label) echo "Version:" ;;
+
+      # Help messages
+      help_usage) echo "Usage:" ;;
+      help_description) echo "K8s Port Forward Manager - Interactive TUI tool for managing Kubernetes port forwarding" ;;
+      help_commands) echo "Commands:" ;;
+      help_ui) echo "Launch interactive UI mode (default)" ;;
+      help_start) echo "Start port forwarding for all or specific services" ;;
+      help_stop) echo "Stop all port forwarding" ;;
+      help_status) echo "Show status of running port forwards" ;;
+      help_upgrade) echo "Upgrade to the latest version from GitHub" ;;
+      help_help) echo "Show this help message" ;;
+      help_examples) echo "Examples:" ;;
+      help_example1) echo "Start interactive mode" ;;
+      help_example2) echo "Start all services" ;;
+      help_example3) echo "Start specific services" ;;
+      help_example4) echo "Check status" ;;
+      help_example5) echo "Stop all services" ;;
+      help_example6) echo "Upgrade to latest version" ;;
     esac
   else
     case $key in
@@ -190,6 +215,31 @@ msg() {
       no_logs) echo "로그 파일이 없습니다." ;;
       choice) echo "선택 (1-5):" ;;
       none) echo "없음" ;;
+
+      # Kubernetes 컨텍스트
+      current_context) echo "현재 컨텍스트:" ;;
+      context_not_set) echo "컨텍스트 미설정" ;;
+
+      # 버전
+      version_label) echo "버전:" ;;
+
+      # 도움말 메시지
+      help_usage) echo "사용법:" ;;
+      help_description) echo "K8s Port Forward Manager - Kubernetes 포트 포워딩 관리를 위한 대화형 TUI 도구" ;;
+      help_commands) echo "명령어:" ;;
+      help_ui) echo "대화형 UI 모드 실행 (기본값)" ;;
+      help_start) echo "모든 서비스 또는 특정 서비스의 포트 포워딩 시작" ;;
+      help_stop) echo "모든 포트 포워딩 중지" ;;
+      help_status) echo "실행 중인 포트 포워딩 상태 표시" ;;
+      help_upgrade) echo "GitHub에서 최신 버전으로 업그레이드" ;;
+      help_help) echo "이 도움말 메시지 표시" ;;
+      help_examples) echo "예제:" ;;
+      help_example1) echo "대화형 모드 시작" ;;
+      help_example2) echo "모든 서비스 시작" ;;
+      help_example3) echo "특정 서비스 시작" ;;
+      help_example4) echo "상태 확인" ;;
+      help_example5) echo "모든 서비스 중지" ;;
+      help_example6) echo "최신 버전으로 업그레이드" ;;
     esac
   fi
 }

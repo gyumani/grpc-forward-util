@@ -5,6 +5,14 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lang-messages.sh"
 
+# 버전 정보
+VERSION_FILE="$SCRIPT_DIR/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+  VERSION=$(cat "$VERSION_FILE")
+else
+  VERSION="unknown"
+fi
+
 # 색상 정의
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -160,13 +168,32 @@ start_selected_services() {
   echo "$(msg stop_cmd) $0 stop"
 }
 
+# 현재 Kubernetes 컨텍스트 가져오기
+get_current_context() {
+  if command -v kubectl &> /dev/null; then
+    local ctx=$(kubectl config current-context 2>/dev/null)
+    if [ -n "$ctx" ]; then
+      echo "$ctx"
+    else
+      echo "$(msg context_not_set)"
+    fi
+  else
+    echo "kubectl not found"
+  fi
+}
+
 # gum UI 모드
 gum_ui() {
   while true; do
     clear
     echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-    printf "${BLUE}║   %-36s  ║${NC}\n" "$(msg header_title)"
+    printf "${BLUE}║   %-28s v%-7s  ║${NC}\n" "$(msg header_title)" "$VERSION"
     echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # 현재 Kubernetes 컨텍스트 표시
+    local current_ctx=$(get_current_context)
+    echo -e "${YELLOW}$(msg current_context)${NC} ${GREEN}$current_ctx${NC}"
     echo ""
 
     local running_count=$(get_running_services)
@@ -545,9 +572,41 @@ cli_mode() {
   esac
 }
 
+# 도움말 표시
+show_help() {
+  echo ""
+  echo -e "${BLUE}$(msg help_description)${NC}"
+  echo ""
+  echo -e "${YELLOW}$(msg help_usage)${NC}"
+  echo "  port-machine [command] [options]"
+  echo ""
+  echo -e "${YELLOW}$(msg help_commands)${NC}"
+  echo "  ui                      $(msg help_ui)"
+  echo "  start [service...]      $(msg help_start)"
+  echo "  stop                    $(msg help_stop)"
+  echo "  status                  $(msg help_status)"
+  echo "  upgrade                 $(msg help_upgrade)"
+  echo "  -h, --help              $(msg help_help)"
+  echo ""
+  echo -e "${YELLOW}$(msg help_examples)${NC}"
+  echo "  port-machine            $(msg help_example1)"
+  echo "  port-machine start      $(msg help_example2)"
+  echo "  port-machine start svc1 svc2"
+  echo "                          $(msg help_example3)"
+  echo "  port-machine status     $(msg help_example4)"
+  echo "  port-machine stop       $(msg help_example5)"
+  echo "  port-machine upgrade    $(msg help_example6)"
+  echo ""
+  echo -e "${BLUE}Version:${NC} v$VERSION"
+  echo ""
+}
+
 # 메인
 main() {
   case "${1:-ui}" in
+    -h|--help|help)
+      show_help
+      ;;
     ui)
       if check_gum; then
         gum_ui
@@ -596,7 +655,7 @@ main() {
       fi
       ;;
     *)
-      echo "Usage: $0 {ui|start [services...]|stop|status|upgrade}"
+      echo "Usage: port-machine {ui|start [services...]|stop|status|upgrade|-h|--help}"
       exit 1
       ;;
   esac
