@@ -109,6 +109,24 @@ echo "ko" > ~/.port-machine-lang   # For Korean (한국어)
 
 The language preference is stored in `~/.port-machine-lang` and will be remembered across sessions.
 
+## Upgrade
+
+To upgrade to the latest version:
+
+```bash
+cd grpc-forward-util
+./upgrade.sh
+```
+
+The upgrade script will:
+- ✅ Check for new versions from GitHub
+- ✅ Show changelog before upgrading
+- ✅ Backup your service list and language settings
+- ✅ Pull latest changes
+- ✅ Restore backups if upgrade fails
+
+**Note**: Upgrade feature requires Git installation. Make sure you installed via `git clone`.
+
 ## Configuration
 
 Services are stored in `~/.k8s-port-forward-services.list` in the following format:
@@ -166,7 +184,11 @@ Start multiple port-forwards simultaneously:
 grpc-forward-util/
 ├── dev-port-forward-ui.sh    # Main script
 ├── install.sh                 # Installation script
+├── upgrade.sh                 # Upgrade script
 ├── lang-messages.sh           # Multi-language message definitions
+├── VERSION                    # Current version
+├── LICENSE                    # MIT License
+├── .gitignore                 # Git ignore rules
 └── README.md                  # This file
 ```
 
@@ -250,8 +272,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Created with ❤️ for easier Kubernetes development workflow
 
 ## Changelog
+### v1.2.1 (2025-11-29)
+**Minor Release - addtion upgrade command**
 
-### v1.1.1 (2024-11-29)
+### v1.1.1 (2025-11-29)
 **Minor Release - Multi-language Support & UI Improvements**
 
 #### ✨ New Features

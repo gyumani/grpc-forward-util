@@ -583,8 +583,20 @@ main() {
         done < "$PID_FILE"
       fi
       ;;
+    upgrade)
+      # upgrade.sh 실행
+      if [ -f "$SCRIPT_DIR/upgrade.sh" ]; then
+        exec "$SCRIPT_DIR/upgrade.sh"
+      else
+        echo -e "${RED}✗ upgrade.sh 파일을 찾을 수 없습니다.${NC}"
+        echo ""
+        echo "Git을 통해 설치했는지 확인해주세요:"
+        echo "  git clone https://github.com/gyumani/grpc-forward-util.git"
+        exit 1
+      fi
+      ;;
     *)
-      echo "Usage: $0 {ui|start [services...]|stop|status}"
+      echo "Usage: $0 {ui|start [services...]|stop|status|upgrade}"
       exit 1
       ;;
   esac
