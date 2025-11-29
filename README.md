@@ -28,7 +28,6 @@ An interactive TUI (Text User Interface) tool for managing Kubernetes port forwa
 🚀 Start Services
 ⏹️  Stop All
 📊 Check Status
-📝 Service List
 ⚙️  Manage Services
 📋 View Logs
 ❌ Exit
@@ -249,6 +248,44 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Author
 
 Created with ❤️ for easier Kubernetes development workflow
+
+## Changelog
+
+### v1.1.1 (2024-11-29)
+**Minor Release - Multi-language Support & UI Improvements**
+
+#### ✨ New Features
+- 🌐 **Multi-language Support**: Full English and Korean (한국어) UI
+- 🎨 **Improved Service Management**: Consolidated service list into management screen
+- 📊 **Enhanced Display**: Show remote port in service management view
+
+#### 🔧 Changes
+- Removed redundant "Service List" menu (now integrated into Service Management)
+- Service Management now displays 4 columns: Service Name, Namespace, Local Port, Remote Port
+- Language preference is saved and persists across sessions
+- Improved menu organization (6 main menu items instead of 7)
+
+#### 🐛 Bug Fixes
+- Fixed Bash 3.2 compatibility issues with associative arrays
+- Fixed menu selection pattern matching for multi-language support
+- Improved case-insensitive menu matching
+
+#### 📝 Documentation
+- Added comprehensive README with installation guide
+- Added LICENSE (MIT)
+- Added .gitignore for better repository management
+- Added disclaimer and security guidelines
+
+---
+
+### v1.0.0 (Initial Release)
+- ✅ Interactive TUI for Kubernetes port-forwarding
+- ✅ Auto-reconnect on connection drop
+- ✅ Multi-service selection
+- ✅ Service CRUD operations
+- ✅ Log viewing
+- ✅ CLI fallback mode
+- ✅ gum-based beautiful UI
 
 ## Acknowledgments
 

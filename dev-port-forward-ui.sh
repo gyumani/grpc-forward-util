@@ -181,7 +181,6 @@ gum_ui() {
       "$(msg menu_start)" \
       "$(msg menu_stop)" \
       "$(msg menu_status)" \
-      "$(msg menu_list)" \
       "$(msg menu_manage)" \
       "$(msg menu_logs)" \
       "$(msg menu_exit)")
@@ -260,28 +259,6 @@ gum_ui() {
       echo "$(msg press_enter)"
       read
 
-    elif [[ "$ACTION" == *"List"* ]] || [[ "$ACTION" == *"목록"* ]]; then
-      # 서비스 목록
-      echo ""
-      echo -e "${BLUE}$(msg header_list)${NC}"
-      echo ""
-
-      local service_count=$(count_services)
-      if [ "$service_count" -eq 0 ]; then
-        echo "$(msg registered_services)"
-      else
-        printf "%-30s %-15s %-10s %-10s\n" "$(msg table_service_name)" "$(msg table_namespace)" "$(msg table_local_port)" "$(msg table_remote_port)"
-        echo "-----------------------------------------------------------------------"
-
-        while IFS='|' read -r name namespace local_port remote_port; do
-          printf "%-30s %-15s %-10s %-10s\n" "$name" "$namespace" "$local_port" "$remote_port"
-        done < "$SERVICES_FILE"
-      fi
-
-      echo ""
-      echo "$(msg press_enter)"
-      read
-
     elif [[ "$ACTION" == *"Manage"* ]] || [[ "$ACTION" == *"관리"* ]]; then
       # 서비스 관리
       while true; do
@@ -296,10 +273,10 @@ gum_ui() {
         echo ""
 
         if [ "$svc_count" -gt 0 ]; then
-          printf "%-30s %-15s %-10s\n" "$(msg table_service_name)" "$(msg table_namespace)" "$(msg table_local_port)"
-          echo "-------------------------------------------------------"
+          printf "%-30s %-15s %-10s %-10s\n" "$(msg table_service_name)" "$(msg table_namespace)" "$(msg table_local_port)" "$(msg table_remote_port)"
+          echo "-----------------------------------------------------------------------"
           while IFS='|' read -r name namespace local_port remote_port; do
-            printf "%-30s %-15s %-10s\n" "$name" "$namespace" "$local_port"
+            printf "%-30s %-15s %-10s %-10s\n" "$name" "$namespace" "$local_port" "$remote_port"
           done < "$SERVICES_FILE"
           echo ""
         fi
@@ -525,7 +502,7 @@ cli_mode() {
   echo "==================================="
   echo ""
   echo "1. $(msg usage_start)"
-  echo "2. $(msg menu_list)"
+  echo "2. $(msg menu_manage)"
   echo "3. $(msg menu_stop)"
   echo "4. $(msg menu_status)"
   echo "5. $(msg menu_exit)"
@@ -539,10 +516,10 @@ cli_mode() {
       ;;
     2)
       echo ""
-      printf "%-30s %-15s %-10s\n" "$(msg table_service_name)" "$(msg table_namespace)" "$(msg table_local_port)"
-      echo "-------------------------------------------------------"
+      printf "%-30s %-15s %-10s %-10s\n" "$(msg table_service_name)" "$(msg table_namespace)" "$(msg table_local_port)" "$(msg table_remote_port)"
+      echo "-----------------------------------------------------------------------"
       while IFS='|' read -r name namespace local_port remote_port; do
-        printf "%-30s %-15s %-10s\n" "$name" "$namespace" "$local_port"
+        printf "%-30s %-15s %-10s %-10s\n" "$name" "$namespace" "$local_port" "$remote_port"
       done < "$SERVICES_FILE"
       ;;
     3)
