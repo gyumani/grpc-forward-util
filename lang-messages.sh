@@ -128,6 +128,24 @@ msg() {
       help_example4) echo "Check status" ;;
       help_example5) echo "Stop all services" ;;
       help_example6) echo "Upgrade to latest version" ;;
+
+      # Config management
+      menu_config) echo "💾 Config Management" ;;
+      config_export_yaml) echo "📤 Export to YAML" ;;
+      config_export_ini) echo "📤 Export to INI" ;;
+      config_import_yaml) echo "📥 Import from YAML" ;;
+      config_import_ini) echo "📥 Import from INI" ;;
+      config_back) echo "◀️  Back" ;;
+
+      # Export/Import messages
+      export_success) echo "✓ Configuration exported successfully!" ;;
+      export_location) echo "Location:" ;;
+      import_success) echo "✓ Configuration imported successfully!" ;;
+      import_failed) echo "✗ Import failed. File not found or invalid format." ;;
+      enter_file_path) echo "Enter file path (or press Enter for default):" ;;
+      import_confirm) echo "This will replace current services. Continue?" ;;
+      backup_created) echo "Backup created:" ;;
+      services_imported) echo "services imported." ;;
     esac
   else
     case $key in
@@ -240,6 +258,24 @@ msg() {
       help_example4) echo "상태 확인" ;;
       help_example5) echo "모든 서비스 중지" ;;
       help_example6) echo "최신 버전으로 업그레이드" ;;
+
+      # 설정 관리
+      menu_config) echo "💾 설정 관리" ;;
+      config_export_yaml) echo "📤 YAML로 내보내기" ;;
+      config_export_ini) echo "📤 INI로 내보내기" ;;
+      config_import_yaml) echo "📥 YAML에서 가져오기" ;;
+      config_import_ini) echo "📥 INI에서 가져오기" ;;
+      config_back) echo "◀️  뒤로" ;;
+
+      # Export/Import 메시지
+      export_success) echo "✓ 설정이 성공적으로 내보내졌습니다!" ;;
+      export_location) echo "위치:" ;;
+      import_success) echo "✓ 설정을 성공적으로 가져왔습니다!" ;;
+      import_failed) echo "✗ 가져오기 실패. 파일을 찾을 수 없거나 형식이 올바르지 않습니다." ;;
+      enter_file_path) echo "파일 경로 입력 (기본값은 Enter):" ;;
+      import_confirm) echo "현재 서비스를 모두 대체합니다. 계속하시겠습니까?" ;;
+      backup_created) echo "백업 생성됨:" ;;
+      services_imported) echo "개 서비스를 가져왔습니다." ;;
     esac
   fi
 }

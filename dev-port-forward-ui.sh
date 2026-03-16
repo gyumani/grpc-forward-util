@@ -22,6 +22,7 @@ NC='\033[0m' # No Color
 
 # 설정 파일
 SERVICES_FILE="$HOME/.k8s-port-forward-services.list"
+CONFIG_YAML="$HOME/.k8s-port-forward-config.yaml"
 PID_FILE="/tmp/k8s-port-forward.pids"
 LOG_DIR="/tmp/k8s-port-forward-logs"
 
@@ -102,6 +103,179 @@ count_services() {
   else
     echo "0"
   fi
+}
+
+# YAML 설정 파일로 내보내기
+export_to_yaml() {
+  local output_file="${1:-$CONFIG_YAML}"
+
+  echo "# K8s Port Forward Manager Configuration" > "$output_file"
+  echo "# Version: $VERSION" >> "$output_file"
+  echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')" >> "$output_file"
+  echo "" >> "$output_file"
+  echo "services:" >> "$output_file"
+
+  if [ -f "$SERVICES_FILE" ] && [ -s "$SERVICES_FILE" ]; then
+    while IFS='|' read -r name namespace local_port remote_port; do
+      echo "  - name: $name" >> "$output_file"
+      echo "    namespace: $namespace" >> "$output_file"
+      echo "    local_port: $local_port" >> "$output_file"
+      echo "    remote_port: $remote_port" >> "$output_file"
+      echo "" >> "$output_file"
+    done < "$SERVICES_FILE"
+  fi
+
+  return 0
+}
+
+# YAML 설정 파일에서 가져오기 (간단한 YAML 파서)
+import_from_yaml() {
+  local input_file="${1:-$CONFIG_YAML}"
+
+  if [ ! -f "$input_file" ]; then
+    return 1
+  fi
+
+  # 임시 파일 생성
+  local temp_file=$(mktemp)
+
+  # YAML 파싱 (Bash 3.2 호환)
+  local in_services=0
+  local name="" namespace="" local_port="" remote_port=""
+
+  while IFS= read -r line; do
+    # 주석과 빈 줄 무시
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
+
+    # services: 섹션 시작
+    if [[ "$line" =~ ^services: ]]; then
+      in_services=1
+      continue
+    fi
+
+    if [ $in_services -eq 1 ]; then
+      # 새 서비스 항목 시작
+      if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*name: ]]; then
+        # 이전 서비스 저장
+        if [ -n "$name" ]; then
+          echo "${name}|${namespace}|${local_port}|${remote_port}" >> "$temp_file"
+        fi
+        # 새 서비스 초기화
+        name=$(echo "$line" | sed 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*//')
+        namespace=""
+        local_port=""
+        remote_port=""
+      elif [[ "$line" =~ ^[[:space:]]*name: ]]; then
+        name=$(echo "$line" | sed 's/^[[:space:]]*name:[[:space:]]*//')
+      elif [[ "$line" =~ ^[[:space:]]*namespace: ]]; then
+        namespace=$(echo "$line" | sed 's/^[[:space:]]*namespace:[[:space:]]*//')
+      elif [[ "$line" =~ ^[[:space:]]*local_port: ]]; then
+        local_port=$(echo "$line" | sed 's/^[[:space:]]*local_port:[[:space:]]*//')
+      elif [[ "$line" =~ ^[[:space:]]*remote_port: ]]; then
+        remote_port=$(echo "$line" | sed 's/^[[:space:]]*remote_port:[[:space:]]*//')
+      fi
+    fi
+  done < "$input_file"
+
+  # 마지막 서비스 저장
+  if [ -n "$name" ]; then
+    echo "${name}|${namespace}|${local_port}|${remote_port}" >> "$temp_file"
+  fi
+
+  # 기존 서비스 파일 백업
+  if [ -f "$SERVICES_FILE" ]; then
+    cp "$SERVICES_FILE" "${SERVICES_FILE}.backup"
+  fi
+
+  # 새 설정으로 교체
+  mv "$temp_file" "$SERVICES_FILE"
+
+  return 0
+}
+
+# INI 설정 파일로 내보내기
+export_to_ini() {
+  local output_file="${1:-${CONFIG_YAML%.yaml}.ini}"
+
+  echo "; K8s Port Forward Manager Configuration" > "$output_file"
+  echo "; Version: $VERSION" >> "$output_file"
+  echo "; Generated: $(date '+%Y-%m-%d %H:%M:%S')" >> "$output_file"
+  echo "" >> "$output_file"
+
+  if [ -f "$SERVICES_FILE" ] && [ -s "$SERVICES_FILE" ]; then
+    while IFS='|' read -r name namespace local_port remote_port; do
+      echo "[$name]" >> "$output_file"
+      echo "namespace = $namespace" >> "$output_file"
+      echo "local_port = $local_port" >> "$output_file"
+      echo "remote_port = $remote_port" >> "$output_file"
+      echo "" >> "$output_file"
+    done < "$SERVICES_FILE"
+  fi
+
+  return 0
+}
+
+# INI 설정 파일에서 가져오기
+import_from_ini() {
+  local input_file="${1}"
+
+  if [ ! -f "$input_file" ]; then
+    return 1
+  fi
+
+  # 임시 파일 생성
+  local temp_file=$(mktemp)
+
+  # INI 파싱
+  local current_service=""
+  local namespace="" local_port="" remote_port=""
+
+  while IFS= read -r line; do
+    # 주석과 빈 줄 무시
+    [[ "$line" =~ ^[[:space:]]*\; ]] && continue
+    [[ -z "${line// }" ]] && continue
+
+    # 섹션 헤더 [service_name]
+    if [[ "$line" =~ ^\[(.*)\] ]]; then
+      # 이전 서비스 저장
+      if [ -n "$current_service" ]; then
+        echo "${current_service}|${namespace}|${local_port}|${remote_port}" >> "$temp_file"
+      fi
+      # 새 서비스 초기화
+      current_service="${BASH_REMATCH[1]}"
+      namespace=""
+      local_port=""
+      remote_port=""
+    # 키-값 쌍
+    elif [[ "$line" =~ ^[[:space:]]*([^=]+)[[:space:]]*=[[:space:]]*(.+)$ ]]; then
+      local key="${BASH_REMATCH[1]}"
+      local value="${BASH_REMATCH[2]}"
+      key=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+      case "$key" in
+        namespace) namespace="$value" ;;
+        local_port) local_port="$value" ;;
+        remote_port) remote_port="$value" ;;
+      esac
+    fi
+  done < "$input_file"
+
+  # 마지막 서비스 저장
+  if [ -n "$current_service" ]; then
+    echo "${current_service}|${namespace}|${local_port}|${remote_port}" >> "$temp_file"
+  fi
+
+  # 기존 서비스 파일 백업
+  if [ -f "$SERVICES_FILE" ]; then
+    cp "$SERVICES_FILE" "${SERVICES_FILE}.backup"
+  fi
+
+  # 새 설정으로 교체
+  mv "$temp_file" "$SERVICES_FILE"
+
+  return 0
 }
 
 # 기존 포트 포워딩 정리
@@ -209,6 +383,7 @@ gum_ui() {
       "$(msg menu_stop)" \
       "$(msg menu_status)" \
       "$(msg menu_manage)" \
+      "$(msg menu_config)" \
       "$(msg menu_logs)" \
       "$(msg menu_exit)")
 
@@ -286,7 +461,103 @@ gum_ui() {
       echo "$(msg press_enter)"
       read
 
-    elif [[ "$ACTION" == *"Manage"* ]] || [[ "$ACTION" == *"관리"* ]]; then
+    elif [[ "$ACTION" == *"Config"* ]] || [[ "$ACTION" == *"설정"* ]]; then
+      # 설정 관리
+      while true; do
+        clear
+        echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
+        printf "${BLUE}║   %-36s  ║${NC}\n" "$(msg menu_config)"
+        echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
+        echo ""
+
+        CONFIG_ACTION=$(gum choose \
+          "$(msg config_export_yaml)" \
+          "$(msg config_export_ini)" \
+          "$(msg config_import_yaml)" \
+          "$(msg config_import_ini)" \
+          "$(msg config_back)")
+
+        if [[ "$CONFIG_ACTION" == *"Export"* ]] || [[ "$CONFIG_ACTION" == *"내보내기"* ]]; then
+          echo ""
+          echo "$(msg enter_file_path)"
+
+          if [[ "$CONFIG_ACTION" == *"YAML"* ]]; then
+            FILE_PATH=$(gum input --placeholder "$CONFIG_YAML" --value "$CONFIG_YAML")
+            [ -z "$FILE_PATH" ] && FILE_PATH="$CONFIG_YAML"
+
+            export_to_yaml "$FILE_PATH"
+            echo ""
+            echo -e "${GREEN}$(msg export_success)${NC}"
+            echo "$(msg export_location) $FILE_PATH"
+          else
+            FILE_PATH=$(gum input --placeholder "$HOME/.k8s-port-forward-config.ini" --value "$HOME/.k8s-port-forward-config.ini")
+            [ -z "$FILE_PATH" ] && FILE_PATH="$HOME/.k8s-port-forward-config.ini"
+
+            export_to_ini "$FILE_PATH"
+            echo ""
+            echo -e "${GREEN}$(msg export_success)${NC}"
+            echo "$(msg export_location) $FILE_PATH"
+          fi
+
+          echo ""
+          echo "$(msg press_enter)"
+          read
+
+        elif [[ "$CONFIG_ACTION" == *"Import"* ]] || [[ "$CONFIG_ACTION" == *"가져오기"* ]]; then
+          echo ""
+          echo "$(msg enter_file_path)"
+
+          if [[ "$CONFIG_ACTION" == *"YAML"* ]]; then
+            FILE_PATH=$(gum input --placeholder "$CONFIG_YAML" --value "$CONFIG_YAML")
+            [ -z "$FILE_PATH" ] && FILE_PATH="$CONFIG_YAML"
+          else
+            FILE_PATH=$(gum input --placeholder "$HOME/.k8s-port-forward-config.ini" --value "$HOME/.k8s-port-forward-config.ini")
+            [ -z "$FILE_PATH" ] && FILE_PATH="$HOME/.k8s-port-forward-config.ini"
+          fi
+
+          if [ ! -f "$FILE_PATH" ]; then
+            echo ""
+            echo -e "${RED}$(msg import_failed)${NC}"
+            echo ""
+            echo "$(msg press_enter)"
+            read
+            continue
+          fi
+
+          echo ""
+          echo -e "${YELLOW}$(msg import_confirm)${NC}"
+          echo ""
+
+          if gum confirm "Continue?"; then
+            if [[ "$CONFIG_ACTION" == *"YAML"* ]]; then
+              import_from_yaml "$FILE_PATH"
+            else
+              import_from_ini "$FILE_PATH"
+            fi
+
+            local imported_count=$(count_services)
+            echo ""
+            echo -e "${GREEN}$(msg import_success)${NC}"
+            echo "$imported_count $(msg services_imported)"
+
+            if [ -f "${SERVICES_FILE}.backup" ]; then
+              echo "$(msg backup_created) ${SERVICES_FILE}.backup"
+            fi
+          else
+            echo ""
+            echo -e "${YELLOW}$(msg canceled)${NC}"
+          fi
+
+          echo ""
+          echo "$(msg press_enter)"
+          read
+
+        elif [[ "$CONFIG_ACTION" == *"Back"* ]] || [[ "$CONFIG_ACTION" == *"뒤로"* ]]; then
+          break
+        fi
+      done
+
+    elif [[ "$ACTION" == *"Manage"* ]] || [[ "$ACTION" == *"서비스"* ]]; then
       # 서비스 관리
       while true; do
         clear

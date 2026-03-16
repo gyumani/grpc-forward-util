@@ -22,7 +22,7 @@ An interactive TUI (Text User Interface) tool for managing Kubernetes port forwa
 
 ```
 ╔══════════════════════════════════════════╗
-║   K8s Port Forward Manager v1.3.1       ║
+║   K8s Port Forward Manager v1.3.2       ║
 ╚══════════════════════════════════════════╝
 
 Current Context: your-k8s-cluster
@@ -302,6 +302,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Created with ❤️ for easier Kubernetes development workflow
 
 ## Changelog
+
+### v1.3.2 (2025-03-16)
+**Patch Release - Bug Fix**
+
+#### 🐛 Bug Fixes
+- Fixed menu selection issue where "Config Management" menu incorrectly redirected to "Service Management"
+- Improved menu condition matching order to prioritize more specific patterns
+- Changed Korean menu matching from "관리" to "서비스" to avoid conflicts
+
+#### 🔧 Changes
+- Refactored menu selection logic for better reliability
+- Removed duplicate Config Management code block
+
+---
 
 ### v1.3.1 (2025-11-29)
 **Minor Release - Version Display & Context Monitoring**

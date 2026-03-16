@@ -1,0 +1,27 @@
+# K8s Port Forward Manager Configuration
+# Version: 1.3.2
+# This is an example configuration file
+#
+# You can create this file manually or export from the UI
+# Location: ~/.k8s-port-forward-config.yaml
+
+services:
+  - name: api-server-svc
+    namespace: dev
+    local_port: 8080
+    remote_port: 8080
+
+  - name: grpc-server-svc
+    namespace: production
+    local_port: 9999
+    remote_port: 50051
+
+  - name: database-svc
+    namespace: dev
+    local_port: 5432
+    remote_port: 5432
+
+  - name: redis-svc
+    namespace: dev
+    local_port: 6379
+    remote_port: 6379
