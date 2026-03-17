@@ -239,25 +239,25 @@ The tool will discover:
 
 **Example 2: gRPC Client Configuration (NEW in v1.5.2)**
 
-If your `application-local.yaml` contains:
+If your `application-dev.yaml` contains:
 ```yaml
 grpc:
   server:
-    port: 9999
+    port: 9090
   client:
-    pms-supplier:
-      address: 'static://localhost:9998'
-    infra-common:
-      address: 'static://localhost:9997'
-    infra-message:
-      address: 'static://localhost:9111'
+    payment-service:
+      address: 'static://localhost:8081'
+    notification-service:
+      address: 'static://localhost:8082'
+    analytics-service:
+      address: 'static://localhost:8083'
 ```
 
 The tool will discover:
-- Service: `pms-supplier` → Local: `9998`, Remote: `9090`
-- Service: `infra-common` → Local: `9997`, Remote: `9090`
-- Service: `infra-message` → Local: `9111`, Remote: `9090`
-- Service: `user-service-svc` → Local: `9999`, Remote: `9090` (server port)
+- Service: `payment-service` → Local: `8081`, Remote: `9090`
+- Service: `notification-service` → Local: `8082`, Remote: `9090`
+- Service: `analytics-service` → Local: `8083`, Remote: `9090`
+- Service: `user-service-svc` → Local: `9090`, Remote: `9090` (server port)
 
 **Note**:
 - Auto-discovery searches profile-specific files (`application-*.yaml`) only
