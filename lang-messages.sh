@@ -146,6 +146,49 @@ msg() {
       import_confirm) echo "This will replace current services. Continue?" ;;
       backup_created) echo "Backup created:" ;;
       services_imported) echo "services imported." ;;
+
+      # Profile management
+      menu_profile) echo "📁 Profile Management" ;;
+      current_profile) echo "Current Profile:" ;;
+      profile_create) echo "➕ Create Profile" ;;
+      profile_switch) echo "🔄 Switch Profile" ;;
+      profile_list) echo "📋 List Profiles" ;;
+      profile_delete) echo "➖ Delete Profile" ;;
+      profile_back) echo "◀️  Back" ;;
+
+      # Profile operations
+      enter_profile_name) echo "Enter profile name:" ;;
+      enter_profile_description) echo "Enter description (optional):" ;;
+      profile_created) echo "✓ Profile created successfully!" ;;
+      profile_create_failed) echo "✗ Failed to create profile." ;;
+      profile_already_exists) echo "✗ Profile already exists." ;;
+      profile_switched) echo "✓ Switched to profile:" ;;
+      profile_switch_failed) echo "✗ Failed to switch profile." ;;
+      profile_not_found) echo "✗ Profile not found." ;;
+      profile_deleted) echo "✓ Profile deleted successfully!" ;;
+      profile_delete_failed) echo "✗ Failed to delete profile." ;;
+      profile_cannot_delete_default) echo "✗ Cannot delete default profile." ;;
+      select_profile) echo "Select profile:" ;;
+      no_profiles) echo "No profiles found." ;;
+      profile_count) echo "profiles available" ;;
+      profile_info) echo "Profile Information:" ;;
+      profile_name_label) echo "Name:" ;;
+      profile_description_label) echo "Description:" ;;
+      profile_created_at) echo "Created:" ;;
+      profile_service_count) echo "Services:" ;;
+
+      # Auto-discovery (Phase 2)
+      config_auto_discover) echo "📡 Auto-discover from Project" ;;
+      discovering_services) echo "Discovering services from project..." ;;
+      project_root_found) echo "Project root found:" ;;
+      project_root_not_found) echo "✗ Project root not found in current directory." ;;
+      discovered_services) echo "Discovered services:" ;;
+      no_services_discovered) echo "No services discovered from project files." ;;
+      select_services_to_import) echo "Select services to import (Space to select, Enter to confirm):" ;;
+      services_discovered_count) echo "services discovered" ;;
+      auto_discover_success) echo "✓ Services imported from project!" ;;
+      scanning_files) echo "Scanning project files..." ;;
+      found_config_files) echo "Found configuration files:" ;;
     esac
   else
     case $key in
@@ -276,6 +319,49 @@ msg() {
       import_confirm) echo "현재 서비스를 모두 대체합니다. 계속하시겠습니까?" ;;
       backup_created) echo "백업 생성됨:" ;;
       services_imported) echo "개 서비스를 가져왔습니다." ;;
+
+      # 프로필 관리
+      menu_profile) echo "📁 프로필 관리" ;;
+      current_profile) echo "현재 프로필:" ;;
+      profile_create) echo "➕ 프로필 생성" ;;
+      profile_switch) echo "🔄 프로필 전환" ;;
+      profile_list) echo "📋 프로필 목록" ;;
+      profile_delete) echo "➖ 프로필 삭제" ;;
+      profile_back) echo "◀️  뒤로" ;;
+
+      # 프로필 작업
+      enter_profile_name) echo "프로필 이름 입력:" ;;
+      enter_profile_description) echo "설명 입력 (선택사항):" ;;
+      profile_created) echo "✓ 프로필이 성공적으로 생성되었습니다!" ;;
+      profile_create_failed) echo "✗ 프로필 생성 실패." ;;
+      profile_already_exists) echo "✗ 이미 존재하는 프로필입니다." ;;
+      profile_switched) echo "✓ 프로필이 전환되었습니다:" ;;
+      profile_switch_failed) echo "✗ 프로필 전환 실패." ;;
+      profile_not_found) echo "✗ 프로필을 찾을 수 없습니다." ;;
+      profile_deleted) echo "✓ 프로필이 성공적으로 삭제되었습니다!" ;;
+      profile_delete_failed) echo "✗ 프로필 삭제 실패." ;;
+      profile_cannot_delete_default) echo "✗ default 프로필은 삭제할 수 없습니다." ;;
+      select_profile) echo "프로필 선택:" ;;
+      no_profiles) echo "프로필이 없습니다." ;;
+      profile_count) echo "개의 프로필 사용 가능" ;;
+      profile_info) echo "프로필 정보:" ;;
+      profile_name_label) echo "이름:" ;;
+      profile_description_label) echo "설명:" ;;
+      profile_created_at) echo "생성일:" ;;
+      profile_service_count) echo "서비스 수:" ;;
+
+      # 자동 감지 (Phase 2)
+      config_auto_discover) echo "📡 프로젝트에서 자동 감지" ;;
+      discovering_services) echo "프로젝트에서 서비스 탐색 중..." ;;
+      project_root_found) echo "프로젝트 루트 발견:" ;;
+      project_root_not_found) echo "✗ 현재 디렉토리에서 프로젝트 루트를 찾을 수 없습니다." ;;
+      discovered_services) echo "발견된 서비스:" ;;
+      no_services_discovered) echo "프로젝트 파일에서 서비스를 발견하지 못했습니다." ;;
+      select_services_to_import) echo "가져올 서비스를 선택하세요 (Space로 선택, Enter로 확인):" ;;
+      services_discovered_count) echo "개 서비스 발견" ;;
+      auto_discover_success) echo "✓ 프로젝트에서 서비스를 가져왔습니다!" ;;
+      scanning_files) echo "프로젝트 파일 스캔 중..." ;;
+      found_config_files) echo "발견된 설정 파일:" ;;
     esac
   fi
 }

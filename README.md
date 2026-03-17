@@ -15,6 +15,8 @@ An interactive TUI (Text User Interface) tool for managing Kubernetes port forwa
 - 📋 **Log Viewing** - View logs for each service
 - ⚡ **CLI & UI Modes** - Works with or without gum installed
 - 🌐 **Multi-language Support** - English and Korean (한국어) UI
+- 📁 **Profile Management** - Create and switch between different service configurations
+- 📡 **Auto-Discovery** - Automatically detect services from Spring Boot and Docker Compose files
 - 🔧 **Easy Upgrade** - Built-in upgrade command to get latest version
 - 📖 **Help Command** - Comprehensive help with `-h` or `--help`
 
@@ -22,10 +24,11 @@ An interactive TUI (Text User Interface) tool for managing Kubernetes port forwa
 
 ```
 ╔══════════════════════════════════════════╗
-║   K8s Port Forward Manager v1.3.2       ║
+║   K8s Port Forward Manager v1.4.0       ║
 ╚══════════════════════════════════════════╝
 
 Current Context: your-k8s-cluster
+Current Profile: default
 
 ● Running: 3 services
 
@@ -33,6 +36,8 @@ Current Context: your-k8s-cluster
 ⏹️  Stop All
 📊 Check Status
 ⚙️  Manage Services
+📁 Profile Management
+💾 Config Management
 📋 View Logs
 ❌ Exit
 ```
@@ -99,6 +104,12 @@ port-machine status
 
 # Upgrade to latest version
 port-machine upgrade
+
+# Profile management
+port-machine profile list
+port-machine profile create my-project
+port-machine profile switch my-project
+port-machine profile delete my-project
 ```
 
 ## Language Settings
@@ -169,6 +180,118 @@ Use the interactive UI to manage services:
    - ➖ Delete Service (multi-select)
    - ✏️ Edit Port
 
+### Auto-Discovery from Project Files
+
+**NEW in v1.5.0**: Automatically discover and import services from your project configuration files!
+
+The auto-discovery feature scans your project for service configurations and automatically creates port-forward entries. This eliminates manual service configuration and speeds up setup.
+
+#### Supported File Formats
+
+- **Spring Boot** - `application.yaml`, `application.yml`, `application.properties`
+- **Docker Compose** - `docker-compose.yaml`, `docker-compose.yml`
+
+#### How to Use Auto-Discovery
+
+1. Navigate to your project directory
+2. Launch `port-machine`
+3. Select "💾 Config Management"
+4. Select "📡 Auto-discover from Project"
+5. The tool will:
+   - Find your project root (by detecting `.git`, `package.json`, `build.gradle`, `pom.xml`, etc.)
+   - Scan for configuration files
+   - Extract service names and ports
+   - Display discovered services in a table
+6. Select services to import (multi-select with Space key)
+7. Confirm to add them to your service list
+
+#### What Gets Discovered
+
+**From Spring Boot files:**
+- Service name from `spring.application.name`
+- Port from `server.port` or `grpc.server.port`
+
+**From Docker Compose:**
+- Service names from service definitions
+- Ports from port mappings
+
+**Example:**
+
+If your `application.yaml` contains:
+```yaml
+spring:
+  application:
+    name: user-service
+server:
+  port: 8080
+```
+
+The tool will discover:
+- Service: `user-service-svc`
+- Namespace: `default`
+- Local Port: `8080`
+- Remote Port: `8080`
+
+**Note**: Auto-discovery searches up to 10 directory levels to find your project root.
+
+### Profile Management
+
+Profiles allow you to save and switch between different service configurations. This is useful when working with multiple projects or environments.
+
+#### Creating a Profile
+
+Save your current service configuration as a profile:
+
+```bash
+# UI Mode
+port-machine
+# Select "📁 Profile Management" > "➕ Create Profile"
+
+# CLI Mode
+port-machine profile create my-project "Development services for my project"
+```
+
+#### Switching Profiles
+
+Switch between different profiles:
+
+```bash
+# UI Mode
+port-machine
+# Select "📁 Profile Management" > "🔄 Switch Profile"
+
+# CLI Mode
+port-machine profile switch my-project
+```
+
+#### Listing Profiles
+
+View all available profiles:
+
+```bash
+# UI Mode
+port-machine
+# Select "📁 Profile Management" > "📋 List Profiles"
+
+# CLI Mode
+port-machine profile list
+```
+
+#### Deleting Profiles
+
+Remove a profile (note: "default" profile cannot be deleted):
+
+```bash
+# UI Mode
+port-machine
+# Select "📁 Profile Management" > "➖ Delete Profile"
+
+# CLI Mode
+port-machine profile delete my-project
+```
+
+**Note**: When you switch profiles, the current service list is automatically backed up with a timestamp.
+
 ## Features in Detail
 
 ### Auto-reconnect
@@ -212,6 +335,8 @@ grpc-forward-util/
 ## Configuration Files
 
 - **Service List**: `~/.k8s-port-forward-services.list`
+- **Profiles**: `~/.port-machine-profiles/` (YAML files for each profile)
+- **Current Profile**: `~/.port-machine-current-profile`
 - **Language Config**: `~/.port-machine-lang`
 - **PID Tracking**: `/tmp/k8s-port-forward.pids`
 - **Logs**: `/tmp/k8s-port-forward-logs/`
@@ -302,6 +427,57 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Created with ❤️ for easier Kubernetes development workflow
 
 ## Changelog
+
+### v1.5.0 (2026-03-17)
+**Minor Release - Auto-Discovery**
+
+#### ✨ New Features
+- 📡 **Auto-Discovery from Project Files**: Automatically detect and import services from configuration files
+- 🔍 **Smart Project Root Detection**: Searches up to 10 levels to find project root
+- 🌱 **Spring Boot Support**: Parses `application.yaml`, `application.yml`, and `application.properties`
+- 🐳 **Docker Compose Support**: Extracts services and ports from `docker-compose.yaml` files
+- 🎯 **Multi-Select Import**: Choose which discovered services to import
+- 📊 **Discovery Preview**: View all discovered services in a table before importing
+
+#### 🔧 Features
+- Automatic extraction of service names from `spring.application.name`
+- Port detection from `server.port` and `grpc.server.port` in Spring Boot
+- Docker Compose service and port mapping parser
+- Project root markers: `.git`, `package.json`, `build.gradle`, `pom.xml`, `Cargo.toml`, `go.mod`
+- Duplicate service detection during import
+- Multi-language support for all auto-discovery features
+
+#### 📝 Documentation
+- Added comprehensive Auto-Discovery guide in README
+- Added supported file formats documentation
+- Added usage examples with sample configurations
+
+---
+
+### v1.4.0 (2026-03-17)
+**Minor Release - Profile Management**
+
+#### ✨ New Features
+- 📁 **Profile Management**: Save and switch between different service configurations
+- 🎨 **Profile UI**: Dedicated profile management menu in interactive UI
+- 🔄 **Profile Switching**: Seamlessly switch between projects with automatic backup
+- 📊 **Profile Information**: View profile details including service count and creation date
+- 💻 **CLI Support**: Full CLI commands for profile operations (`create`, `switch`, `list`, `delete`)
+
+#### 🔧 Features
+- Profile directory structure at `~/.port-machine-profiles/`
+- Profile format: YAML with metadata (name, description, created date)
+- Automatic backup when switching profiles (timestamped)
+- Current profile tracking and display in main UI
+- Protected "default" profile cannot be deleted
+- Multi-language support for all profile features
+
+#### 📝 Documentation
+- Added comprehensive Profile Management guide in README
+- Updated configuration files section
+- Added CLI command examples for profile operations
+
+---
 
 ### v1.3.2 (2025-03-16)
 **Patch Release - Bug Fix**
