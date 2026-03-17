@@ -188,7 +188,8 @@ The auto-discovery feature scans your project for service configurations and aut
 
 #### Supported File Formats
 
-- **Spring Boot** - `application.yaml`, `application.yml`, `application.properties`
+- **Spring Boot** - `application-*.yaml`, `application-*.yml` (profile-specific configs), `application.properties`
+  - **gRPC Client Configuration** (v1.5.2+) - Parses `grpc.client.*` sections to discover client services
 - **Docker Compose** - `docker-compose.yaml`, `docker-compose.yml`
 
 #### How to Use Auto-Discovery
@@ -209,15 +210,19 @@ The auto-discovery feature scans your project for service configurations and aut
 
 **From Spring Boot files:**
 - Service name from `spring.application.name`
-- Port from `server.port` or `grpc.server.port`
+- Server port from `server.port` or `grpc.server.port`
+- **gRPC Client Services** (v1.5.2+): Automatically discovers gRPC client configurations
+  - Extracts service names from `grpc.client.*` section
+  - Parses local ports from `address` field (e.g., `static://localhost:9998`)
+  - Remote port set to 9090 for all services
 
 **From Docker Compose:**
 - Service names from service definitions
 - Ports from port mappings
 
-**Example:**
+**Example 1: Basic Spring Boot Server**
 
-If your `application.yaml` contains:
+If your `application-dev.yaml` contains:
 ```yaml
 spring:
   application:
@@ -230,9 +235,34 @@ The tool will discover:
 - Service: `user-service-svc`
 - Namespace: `default`
 - Local Port: `8080`
-- Remote Port: `8080`
+- Remote Port: `9090`
 
-**Note**: Auto-discovery searches up to 10 directory levels to find your project root.
+**Example 2: gRPC Client Configuration (NEW in v1.5.2)**
+
+If your `application-local.yaml` contains:
+```yaml
+grpc:
+  server:
+    port: 9999
+  client:
+    pms-supplier:
+      address: 'static://localhost:9998'
+    infra-common:
+      address: 'static://localhost:9997'
+    infra-message:
+      address: 'static://localhost:9111'
+```
+
+The tool will discover:
+- Service: `pms-supplier` → Local: `9998`, Remote: `9090`
+- Service: `infra-common` → Local: `9997`, Remote: `9090`
+- Service: `infra-message` → Local: `9111`, Remote: `9090`
+- Service: `user-service-svc` → Local: `9999`, Remote: `9090` (server port)
+
+**Note**:
+- Auto-discovery searches profile-specific files (`application-*.yaml`) only
+- Duplicate service names are automatically removed (first occurrence kept)
+- All remote ports are standardized to 9090
 
 ### Profile Management
 
@@ -427,6 +457,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Created with ❤️ for easier Kubernetes development workflow
 
 ## Changelog
+
+### v1.5.2 (2026-03-17)
+**Patch Release - gRPC Client Discovery**
+
+#### ✨ New Features
+- 🔌 **gRPC Client Configuration Parsing**: Automatically discovers gRPC client services from Spring Boot configs
+  - Parses `grpc.client.*` sections in `application-*.yaml` files
+  - Extracts service names and ports from address fields (e.g., `static://localhost:9998`)
+  - Each gRPC client becomes a separate discoverable service
+- 🎯 **Profile-Specific File Discovery**: Now scans only `application-*.yaml` and `application-*.yml` files
+  - Excludes base `application.yaml` to reduce noise
+  - Focuses on environment-specific configurations (dev, local, prod, etc.)
+- 🔄 **Duplicate Service Removal**: Automatically removes duplicate service names during discovery
+  - First occurrence is kept when duplicates are found
+  - Cleaner service list without manual cleanup
+
+#### 🔧 Changes
+- **Standardized Remote Ports**: All discovered services now use port 9090 as remote port
+- **Improved YAML Parsing**: State machine approach for nested gRPC client configurations
+- **Better Discovery Output**: Progress messages during file scanning
+
+#### 📝 Documentation
+- Updated README with gRPC client discovery examples
+- Added detailed parsing behavior documentation
+- Added notes about profile-specific file patterns
+- Updated supported file formats section
+
+---
+
+### v1.5.1 (2026-03-17)
+**Patch Release - Version Update**
+
+#### 🔧 Changes
+- Minor version increment for tracking purposes
+
+---
 
 ### v1.5.0 (2026-03-17)
 **Minor Release - Auto-Discovery**

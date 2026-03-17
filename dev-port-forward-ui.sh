@@ -549,17 +549,70 @@ parse_application_yaml() {
     return 1
   fi
 
-  # grpc.server.port 추출
+  # grpc.client.* 에서 서비스 추출 (address에서 포트 파싱)
+  local in_grpc=0
+  local in_client=0
+  local current_service=""
+  local current_address=""
+
+  while IFS= read -r line; do
+    # grpc: 섹션 시작
+    if [[ "$line" =~ ^grpc: ]]; then
+      in_grpc=1
+      continue
+    fi
+
+    # client: 섹션 감지
+    if [ $in_grpc -eq 1 ] && [[ "$line" =~ ^[[:space:]]{2}client: ]]; then
+      in_client=1
+      continue
+    fi
+
+    # client 섹션 내에서 서비스 이름 감지 (들여쓰기 4칸)
+    if [ $in_client -eq 1 ] && [[ "$line" =~ ^[[:space:]]{4}([a-zA-Z0-9_-]+): ]]; then
+      # 이전 서비스 출력
+      if [ -n "$current_service" ] && [ -n "$current_address" ]; then
+        # address에서 포트 추출: static://localhost:9998 -> 9998
+        local port=$(echo "$current_address" | sed -E "s/.*:([0-9]+).*/\1/")
+        if [ -n "$port" ]; then
+          echo "${current_service}|default|${port}|9090"
+        fi
+      fi
+
+      current_service="${BASH_REMATCH[1]}"
+      current_address=""
+    fi
+
+    # address 값 추출 (들여쓰기 6칸)
+    if [ $in_client -eq 1 ] && [[ "$line" =~ ^[[:space:]]{6}address:[[:space:]]*[\'\"]*([^\'\"]*)[\'\"]* ]]; then
+      current_address="${BASH_REMATCH[1]}"
+    fi
+
+    # client 섹션 종료 감지 (들여쓰기 2칸으로 다른 섹션 시작)
+    if [ $in_client -eq 1 ] && [[ "$line" =~ ^[[:space:]]{2}[a-zA-Z] ]] && [[ ! "$line" =~ ^[[:space:]]{2}client: ]]; then
+      in_client=0
+    fi
+  done < "$file"
+
+  # 마지막 서비스 출력
+  if [ -n "$current_service" ] && [ -n "$current_address" ]; then
+    local port=$(echo "$current_address" | sed -E "s/.*:([0-9]+).*/\1/")
+    if [ -n "$port" ]; then
+      echo "${current_service}|default|${port}|9090"
+    fi
+  fi
+
+  # grpc.server.port 추출 (기존 서버 포트도 유지)
   local grpc_port=$(grep -E "grpc:" -A 10 "$file" | grep -E "server:" -A 5 | grep -E "^\s*port:\s*[0-9]+" | head -1 | sed -E 's/^[[:space:]]*port:[[:space:]]*([0-9]+).*/\1/')
 
   # server.port 추출 (Spring Boot HTTP)
   local server_port=$(grep -E "^server:" -A 10 "$file" | grep -E "^\s*port:\s*[0-9]+" | head -1 | sed -E 's/^[[:space:]]*port:[[:space:]]*([0-9]+).*/\1/')
 
-  # 포트 우선순위: gRPC > HTTP server
+  # 서버 포트도 출력 (만약 있으면)
   if [ -n "$grpc_port" ]; then
-    echo "${app_name}-svc|default|${grpc_port}|${grpc_port}"
+    echo "${app_name}-svc|default|${grpc_port}|9090"
   elif [ -n "$server_port" ]; then
-    echo "${app_name}-svc|default|${server_port}|${server_port}"
+    echo "${app_name}-svc|default|${server_port}|9090"
   fi
 }
 
@@ -600,9 +653,9 @@ parse_application_properties() {
 
   # 포트 우선순위: gRPC > HTTP server
   if [ -n "$grpc_port" ]; then
-    echo "${app_name}-svc|default|${grpc_port}|${grpc_port}"
+    echo "${app_name}-svc|default|${grpc_port}|9090"
   elif [ -n "$server_port" ]; then
-    echo "${app_name}-svc|default|${server_port}|${server_port}"
+    echo "${app_name}-svc|default|${server_port}|9090"
   fi
 }
 
@@ -635,7 +688,7 @@ parse_docker_compose() {
           # 포트 형식: "8080:8080" 또는 "8080"
           local port=$(echo "$current_ports" | sed -E 's/.*"([0-9]+):([0-9]+)".*/\1/')
           if [ -n "$port" ]; then
-            echo "${current_service}-svc|default|${port}|${port}"
+            echo "${current_service}-svc|default|${port}|9090"
           fi
         fi
 
@@ -658,7 +711,7 @@ parse_docker_compose() {
   if [ -n "$current_service" ] && [ -n "$current_ports" ]; then
     local port=$(echo "$current_ports" | sed -E 's/([0-9]+):.*/\1/')
     if [ -n "$port" ]; then
-      echo "${current_service}-svc|default|${port}|${port}"
+      echo "${current_service}-svc|default|${port}|9090"
     fi
   fi
 }
@@ -668,9 +721,9 @@ discover_services_from_project() {
   local search_path="${1:-$HOME}"
   local discovered_services=()
 
-  # application.yaml/yml 찾기 (전체 경로에서)
-  echo "Scanning $search_path for application.yaml/yml files..." >&2
-  local app_yamls=$(find "$search_path" -type f \( -name "application.yaml" -o -name "application.yml" \) 2>/dev/null)
+  # application-*.yaml/yml 찾기 (프로필별 설정 파일만)
+  echo "Scanning $search_path for application-*.yaml/yml files..." >&2
+  local app_yamls=$(find "$search_path" -type f \( -name "application-*.yaml" -o -name "application-*.yml" \) 2>/dev/null)
 
   local yaml_count=0
   for yaml in $app_yamls; do
@@ -712,12 +765,26 @@ discover_services_from_project() {
   done
   echo "Found $compose_count docker-compose files" >&2
 
-  # 배열 출력 (Bash 3.2 호환)
+  # 중복 제거 (서비스명 기준, Bash 3.2 호환)
+  local unique_services=()
+  local seen_names=""
+
   for service in "${discovered_services[@]}"; do
+    local service_name=$(echo "$service" | cut -d'|' -f1)
+
+    # 이미 본 서비스인지 확인
+    if ! echo "$seen_names" | grep -q "^${service_name}$"; then
+      unique_services+=("$service")
+      seen_names="${seen_names}${service_name}"$'\n'
+    fi
+  done
+
+  # 배열 출력 (Bash 3.2 호환)
+  for service in "${unique_services[@]}"; do
     echo "$service"
   done
 
-  if [ ${#discovered_services[@]} -eq 0 ]; then
+  if [ ${#unique_services[@]} -eq 0 ]; then
     return 1
   fi
 
@@ -1015,18 +1082,25 @@ gum_ui() {
                 local local_port=$(echo "$svc_info" | cut -d'|' -f3)
                 local remote_port=$(echo "$svc_info" | cut -d'|' -f4)
 
-                # 서비스별로 네임스페이스 입력 받기
-                echo -e "${YELLOW}[$name]${NC}"
+                # 서비스별로 이름, 네임스페이스 입력 받기
+                echo -e "${YELLOW}[Service Configuration]${NC}"
+                echo "  Original name: $name"
+                echo ""
+                echo "  Service name (default: $name):"
+                local input_name=$(gum input --placeholder "$name" --value "$name")
+                [ -z "$input_name" ] && input_name="$name"
+
+                echo ""
                 echo "  $(msg namespace) (default: $default_namespace):"
                 local input_namespace=$(gum input --placeholder "$default_namespace" --value "$default_namespace")
                 [ -z "$input_namespace" ] && input_namespace="$default_namespace"
 
                 # 중복 체크 후 추가
-                if add_service "$name" "$input_namespace" "$local_port" "$remote_port"; then
-                  echo -e "${GREEN}✓${NC} $name → $input_namespace:$local_port"
+                if add_service "$input_name" "$input_namespace" "$local_port" "$remote_port"; then
+                  echo -e "${GREEN}✓${NC} $input_name → $input_namespace:$local_port"
                   import_count=$((import_count + 1))
                 else
-                  echo -e "${YELLOW}⊙${NC} $name ($(msg already_exists))"
+                  echo -e "${YELLOW}⊙${NC} $input_name ($(msg already_exists))"
                 fi
                 echo ""
               fi
